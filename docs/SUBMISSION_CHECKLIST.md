@@ -7,7 +7,7 @@
 - [x] src/main.py·database.py, templates/·static/ 배치. DB Base·DateTimeBase·init_models를 database.py에 통합.
 - [x] 상품·회원·인증·주문·재고·취소·게시판 코드와 테스트 작성.
 - [x] README에 현재 전체 트리, 컴포넌트 흐름, 교안 표준 실행 명령 기록.
-- [x] 경로 변경 후 전체 95개 테스트(18.20초), compileall·ruff 통과.
+- [x] 경로 변경 후 전체 95개 테스트(18.48초), compileall·ruff 통과.
 - [x] 현재 구조에서 Python 모듈 방식 서버 시작, 상품 20개, /docs·HTML·CSS HTTP 200 확인. 표준 실행 파일은 Windows App Control 4551로 차단.
 - [x] 구조 검사 및 함수·클래스 AST 보존 확인. 백업과 OpenAPI 17 paths/28 operations, 8개 테이블 메타데이터 동일.
 
@@ -27,9 +27,12 @@
 - [ ] 요청 시간 로그와 CORS 확인. 토큰·비밀번호·DB 주소·개인정보를 캡처에서 제거.
 - [ ] 완성 캡처를 README에 실제 이미지로 연결.
 
-## 저장소·팀 Notion: 아직 미완료
-- [ ] .env·.venv·캐시·로컬 로그·테스트 DB·백업 제외와 비밀값 검사.
-- [ ] 승인된 GitHub 저장소에 commit/push 후 제출 commit과 접근 가능한 URL 확인.
+## 저장소·팀 Notion: 비공개 코드 반영, 공개 제출 준비 중
+- [x] .env·.venv·캐시·로컬 로그·테스트 DB·백업 제외 확인. 제출 후보와 Git 기록의 비밀 패턴 검사에서 발견 없음(완전한 보안 감사는 아님).
+- [x] 승인된 비공개 GitHub 작업 브랜치 게시 및 main fast-forward 반영.
+- [x] README에 ORM 8테이블·7개 FK 기준 최종 Mermaid ERD 추가.
+- [ ] 저장소 공개 또는 평가자 접근 권한 승인 후 제출 URL 외부 접근 확인.
+- [ ] 별도 게시판 개인 평가용 저장소·서비스 URL은 별도로 준비.
 - [ ] 팀 Notion에 Use Case·규칙·ERD·API 명세·실제 기획 및 진행 내역 정리.
 - [ ] 실제 팀원·역할·회의록 확인. 없는 활동을 작성하지 않기.
 - [ ] 공개할 내용 검토와 게시 승인 후 Notion Public Share URL을 비로그인 상태에서 확인.

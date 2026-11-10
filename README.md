@@ -2,6 +2,13 @@
 
 재고 초과 주문, 중복 취소로 인한 재고 증가, 다른 회원의 주문 접근을 방지하는 학습용 API입니다. 회원·인증과 게시판을 함께 구현하며, AX Engineer 학습을 위해 코드와 실패 사례를 직접 설명할 수 있도록 구성했습니다.
 
+## 저장소 상태 · 2026-11-10
+
+- `work/premium-food-board`의 검증된 구현을 `main`에 fast-forward로 반영했습니다.
+- 저장소는 **비공개**입니다. 공개 전환·별도 게시판 제출 저장소·EC2 배포는 이번 병합에 포함하지 않습니다.
+- [최신 main](https://github.com/yoosangjn-stack/premium-food-api/tree/main) · [작업 브랜치](https://github.com/yoosangjn-stack/premium-food-api/tree/work/premium-food-board)
+- `.env`, 실제 DB, 가상환경, 로그, 백업은 Git에서 제외했습니다. 검사한 소스·테스트·문서만 반영합니다.
+
 ## 기준과 구현 범위
 
 - [최신 발제문: 프로젝트(2) 백엔드 서비스 API 구현하기](https://app.notion.com/p/2-API-7443559b23138235848201fc2cd01522)
@@ -66,6 +73,119 @@ wiring/ → 실제 저장소·서비스·트랜잭션 객체 조립
 
 실행 호출 흐름과 import 의존성은 구분합니다. Domain은 FastAPI·SQLAlchemy를 import하지 않으며 Presentation은 Infrastructure를 직접 조립하지 않습니다. `wiring/commerce.py`가 같은 요청 세션을 주문·상품 저장소와 트랜잭션 관리자에 넣습니다. 서비스는 규칙을 호출하고 마지막에 한 번 commit, 실패 시 rollback합니다. 저장소의 flush는 최종 확정이 아닙니다.
 
+## 최종 ERD: 실제 ORM 8개 테이블
+
+현재 `src/*/infrastructure/models.py`와 `src/database.py`의 테이블 정의를 대조했습니다. 실제 회원·토큰·비밀번호·DB 접속값이 아닌 **구조만** 표시합니다. PK는 기본키, FK는 외래키, UK는 단일 컬럼 중복 금지입니다.
+
+```mermaid
+erDiagram
+    users ||..o{ orders : user_id
+    orders ||..o{ order_items : order_id
+    products ||..o{ order_items : product_id
+    boards ||..o{ posts : board_id
+    users |o..o{ posts : author_id
+    posts ||..o{ comments : post_id
+    users |o..o{ comments : author_id
+    users {
+        uuid id PK "UUID; NOT NULL"
+        varchar username UK "VARCHAR(30); NOT NULL"
+        varchar phone "VARCHAR(15); NOT NULL"
+        varchar email UK "VARCHAR(255); NOT NULL"
+        varchar name "VARCHAR(50); NOT NULL"
+        varchar password_hash "VARCHAR(255); NOT NULL"
+        varchar role "VARCHAR(20); NOT NULL"
+        boolean resign "BOOLEAN; NOT NULL"
+        timestamptz created_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+        timestamptz modified_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+        timestamptz deleted_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+    }
+    products {
+        integer id PK "INTEGER; NOT NULL"
+        varchar name "VARCHAR(100); NOT NULL"
+        integer price "INTEGER; NOT NULL"
+        integer stock_quantity "INTEGER; NOT NULL"
+    }
+    orders {
+        uuid id PK "UUID; NOT NULL"
+        varchar order_number UK "VARCHAR(40); NOT NULL"
+        uuid user_id FK "UUID; NOT NULL"
+        timestamptz ordered_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+        varchar status "VARCHAR(20); NOT NULL"
+        bigint total_price "BIGINT; NOT NULL"
+    }
+    order_items {
+        integer id PK "INTEGER; NOT NULL"
+        uuid order_id FK "UUID; NOT NULL"
+        integer product_id FK "INTEGER; NOT NULL"
+        varchar product_name "VARCHAR(100); NOT NULL"
+        integer quantity "INTEGER; NOT NULL"
+        bigint unit_price "BIGINT; NOT NULL"
+        bigint total_price "BIGINT; NOT NULL"
+    }
+    boards {
+        varchar id PK "VARCHAR(30); NOT NULL"
+        varchar board_name "VARCHAR(100); NOT NULL"
+        integer page_size "INTEGER; NOT NULL"
+        varchar edit_role "VARCHAR(20); NOT NULL"
+        varchar view_role "VARCHAR(20); NOT NULL"
+        varchar list_role "VARCHAR(20); NOT NULL"
+        varchar comment_list_role "VARCHAR(20); NOT NULL"
+        varchar comment_edit_role "VARCHAR(20); NOT NULL"
+        timestamptz created_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+        timestamptz modified_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+        timestamptz deleted_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+    }
+    posts {
+        bigint id PK "BIGINT; NOT NULL"
+        varchar board_id FK "VARCHAR(30); NOT NULL"
+        varchar title "VARCHAR(255); NOT NULL"
+        text content "TEXT; NOT NULL"
+        varchar author_name "VARCHAR(50); NOT NULL"
+        uuid author_id FK "UUID; NULL allowed"
+        varchar guest_password "VARCHAR(65); NULL allowed"
+        timestamptz created_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+        timestamptz modified_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+        timestamptz deleted_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+    }
+    comments {
+        bigint id PK "BIGINT; NOT NULL"
+        bigint post_id FK "BIGINT; NOT NULL"
+        text content "TEXT; NOT NULL"
+        varchar author_name "VARCHAR(50); NOT NULL"
+        uuid author_id FK "UUID; NULL allowed"
+        varchar guest_password "VARCHAR(65); NULL allowed"
+        timestamptz created_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+        timestamptz modified_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+        timestamptz deleted_at "TIMESTAMP WITH TIME ZONE; NULL allowed"
+    }
+    token_blacklist {
+        varchar jti PK "VARCHAR(36); NOT NULL"
+        timestamptz expired_at "TIMESTAMP WITH TIME ZONE; NOT NULL"
+    }
+```
+
+### 관계를 읽는 법
+
+- 회원 1명은 주문을 여러 번 할 수 있고, 주문항목마다 상품 1개를 참조합니다. 상품명·단가는 주문 당시 값으로 별도 보관합니다.
+- 게시판 → 게시글 → 댓글 관계입니다. 회원이 쓴 글·댓글은 users를 참조하지만, 비회원 글·댓글의 author_id는 NULL일 수 있습니다.
+- `token_blacklist`는 로그아웃한 JWT의 jti와 만료 시각만 저장합니다. **users와 FK가 없는 독립 테이블**이므로 연결선을 그리지 않습니다.
+- 선은 실제 FK 기준이며, 주문당 최소 1개 항목 규칙은 도메인/API가 보장합니다. FK만으로 최소 항목 수를 강제하는 것은 아닙니다.
+- `(order_id, product_id)`는 복합 UNIQUE입니다. 같은 주문 안에서 같은 상품을 중복 저장하지 않습니다. 각 컬럼이 단독 UNIQUE라는 의미는 아닙니다.
+
+| 외래키 | 참조 | 물리 삭제 규칙 |
+|---|---|---|
+| orders.user_id | users.id | RESTRICT |
+| order_items.order_id | orders.id | CASCADE |
+| order_items.product_id | products.id | RESTRICT |
+| posts.board_id | boards.id | NO ACTION (기본값) |
+| posts.author_id | users.id | SET NULL |
+| comments.post_id | posts.id | NO ACTION (기본값) |
+| comments.author_id | users.id | SET NULL |
+
+회원·게시글·댓글의 deleted_at 기반 소프트 삭제와 위 FK의 물리 삭제 규칙은 다릅니다. 주문 취소도 주문 삭제가 아니라 status를 CANCELLED로 바꾸고 재고를 한 번 복구하는 기능입니다.
+
+모든 created_at/modified_at/deleted_at, ordered_at, expired_at은 시간대가 있는 TIMESTAMPTZ입니다. orders와 order_items의 CheckConstraint는 금액·수량·상태 정합성을 추가 방어합니다.
+
 ## 안전하게 실행하기
 
 Python 3.13+, uv, PostgreSQL이 필요합니다. 저장소 clone은 공개 URL 확인 후 진행하고, 아래 명령은 프로젝트 루트에서 실행합니다. 아직 검증된 GitHub URL은 없습니다.
@@ -120,11 +240,11 @@ uv run python scripts/check_db.py
 
 ## 테스트와 현재 증거
 
-2026-11-10 경로 변경 후 전체 테스트 **95 passed in 18.09s**(기존 93개 + 구조 검사 2개), compileall·ruff가 통과했습니다. 백업과 새 앱의 OpenAPI 17 paths/28 operations 및 8개 테이블 메타데이터가 동일하고 함수·클래스 AST 보존도 읽기 검수로 확인했습니다. 이는 추가 Claude 검수가 아니며 Claude 2회 검수는 11/9 기록입니다.
+2026-11-10 경로 변경 후 전체 테스트 **95 passed in 18.48s**(기존 93개 + 구조 검사 2개), compileall·ruff가 통과했습니다. 백업과 새 앱의 OpenAPI 17 paths/28 operations 및 8개 테이블 메타데이터가 동일하고 함수·클래스 AST 보존도 읽기 검수로 확인했습니다. 이는 추가 Claude 검수가 아니며 Claude 2회 검수는 11/9 기록입니다.
 
 실제 HTTP에서 /docs·/·CSS 200, 상품 20개, 가입 201 → OAuth2 로그인 200 → 주문 201/재고 2 차감 → 취소 200/재고 원복 → 중복 취소 409를 확인했습니다. 미존재 상품 404, 잘못된 현재 비밀번호 400, 게시글 생성·조회·수정·삭제·삭제 후 조회 201/200/200/204/404, 로그아웃 204 → 같은 토큰 401도 확인했습니다. 공백 제목은 422입니다.
 
-브라우저 도구의 timeoutMs 오류로 시각 검증과 제출용 캡처는 미완료입니다. HTTP 성공을 화면 검수 완료로 대신하지 않습니다. PPT/PDF·공개 Notion·GitHub 게시·EC2 배포는 여전히 미완료입니다. 상세 증거는 [11/10 검증 기록](docs/VERIFICATION_2026-11-10.md)을 보세요.
+브라우저 도구의 timeoutMs 오류로 시각 검증과 제출용 캡처는 미완료입니다. HTTP 성공을 화면 검수 완료로 대신하지 않습니다. 비공개 GitHub main에 구현 코드를 반영했습니다. 저장소 공개 전환·PPT/PDF·공개 Notion·EC2 배포는 미완료입니다. 상세 증거는 [11/10 검증 기록](docs/VERIFICATION_2026-11-10.md)을 보세요.
 
 테스트는 **로컬 premium_food_test 전용 DB**만 허용합니다. 테이블 생성과 테스트 데이터 쓰기가 있으므로 실사용 DB를 연결하면 안 됩니다.
 
@@ -143,7 +263,7 @@ uv run python -m compileall -q src tests scripts
 - [학습 가이드](docs/LEARNING_GUIDE.md), [Chapter 3 연결 실습](docs/CHAPTER3_STORY.md)
 - [제출 체크리스트](docs/SUBMISSION_CHECKLIST.md)
 
-PPT/PDF, 공개 팀 Notion URL, Swagger·Jinja2·성공/오류·로그아웃 차단 캡처는 아직 미완료입니다. GitHub 게시와 EC2 배포도 완료로 표시하지 않습니다. 실제 팀원 이름·역할·활동은 확인된 사실만 기록하며 가상의 팀 기록을 만들지 않습니다.
+PPT/PDF, 공개 팀 Notion URL, Swagger·Jinja2·성공/오류·로그아웃 차단 캡처는 아직 미완료입니다. 코드는 [비공개 GitHub main](https://github.com/yoosangjn-stack/premium-food-api/tree/main)에 반영했습니다. 저장소 공개 전환과 EC2 배포는 하지 않았으며, 접근 권한이 없는 사람은 현재 링크를 열 수 없습니다. 실제 팀원 이름·역할·활동은 확인된 사실만 기록하며 가상의 팀 기록을 만들지 않습니다.
 
 ## 알려진 한계
 
