@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block title %}상품 둘러보기{% endblock %} | 한정식탁</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('catalog') }}"><span class="brand-mark" aria-hidden="true">한</span>한정식탁 <small>PREMIUM FOOD</small></a>
+    <nav aria-label="주 메뉴"><a href="{{ url_for('catalog') }}">상품 목록</a><a href="/docs">API 실습 ↗</a></nav>
+  </header>
+  <main id="main">{% block content %}{% endblock %}</main>
+  <footer><strong>한정식탁 · Premium Food API</strong><p>한정 수량 식품 주문을 배우는 프로젝트입니다. 결제·배송 기능은 제공하지 않습니다.</p><a href="/docs">Swagger 문서</a><span aria-hidden="true"> · </span><a href="/v1/products">상품 API (JSON)</a></footer>
+</body>
+</html>

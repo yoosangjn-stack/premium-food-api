@@ -1,0 +1,3 @@
+{% extends "base.html" %}
+{% block title %}상품을 찾을 수 없습니다{% endblock %}
+{% block content %}<section class="empty"><p class="eyebrow">404 / PRODUCT NOT FOUND</p><h1>상품을 찾을 수 없습니다</h1><p>상품 번호를 확인하거나 목록에서 다시 찾아보세요.</p><a class="button" href="{{ url_for('catalog') }}">상품 목록으로</a></section>{% endblock %}

@@ -38,3 +38,7 @@ htmlcov/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Isolated local verification only
+.local-test/
+*.log

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div><p class="eyebrow">SMALL BATCH, GOOD FOOD</p><h1>한정된 수량,<br>정성 가득한 한 끼.</h1><p class="lead">등록된 프리미엄 식품과 현재 남은 수량을 확인하세요.</p></div>
+  <aside class="hero-note"><span class="note-number">01 / CATALOG</span><h2>상품부터 살펴보세요</h2><p>이 화면은 데이터베이스의 상품 정보를 보여주는 읽기 전용 목록입니다.</p><a href="/docs">회원 · 주문 · 게시판 API 실습 ↗</a></aside>
+</section>
+<section aria-labelledby="catalog-heading">
+  <div class="section-title"><div><p class="eyebrow">OUR SELECTION</p><h2 id="catalog-heading">상품 둘러보기</h2></div><p>검색 결과 <strong>{{ total }}</strong>개</p></div>
+  <form class="filters" action="{{ url_for('catalog') }}" method="get" role="search">
+    <div class="field search"><label for="q">상품명</label><input id="q" name="q" maxlength="100" value="{{ filters.q }}" placeholder="찾고 있는 식품이 있나요?"></div>
+    <div class="field"><label for="stock">재고 상태</label><select id="stock" name="stock"><option value="">전체 상품</option><option value="in_stock" {% if filters.stock == 'in_stock' %}selected{% endif %}>재고 있음</option><option value="sold_out" {% if filters.stock == 'sold_out' %}selected{% endif %}>품절</option></select></div>
+    <div class="field"><label for="sort">정렬</label><select id="sort" name="sort"><option value="id" {% if filters.sort == 'id' %}selected{% endif %}>등록순</option><option value="price" {% if filters.sort == 'price' %}selected{% endif %}>낮은 가격순</option><option value="name" {% if filters.sort == 'name' %}selected{% endif %}>이름순</option></select></div>
+    <div class="field"><label for="min_price">최소 가격 (원)</label><input id="min_price" name="min_price" type="number" min="0" max="2147483647" value="{{ filters.min_price }}" placeholder="0"></div>
+    <div class="field"><label for="max_price">최대 가격 (원)</label><input id="max_price" name="max_price" type="number" min="0" max="2147483647" value="{{ filters.max_price }}" placeholder="제한 없음"></div>
+    <input type="hidden" name="size" value="{{ size }}">
+    <button type="submit">검색하기</button><a class="reset" href="{{ url_for('catalog') }}">초기화</a>
+  </form>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <div class="product-grid">
+    {% for product in items %}
+    <article class="product-card">
+      <div class="card-top"><span class="product-id">NO. {{ '%04d' | format(product.id) }}</span><span class="badge {% if product.stock_quantity == 0 %}sold-out{% endif %}">{{ '품절' if product.stock_quantity == 0 else '재고 있음' }}</span></div>
+      <h3><a href="{{ url_for('product_detail', product_id=product.id) }}">{{ product.name }}</a></h3>
+      <p class="price">{{ '{:,}'.format(product.price) }}<span>원</span></p>
+      <div class="card-bottom"><p>남은 수량 <strong>{{ product.stock_quantity }}개</strong></p><a href="{{ url_for('product_detail', product_id=product.id) }}" aria-label="{{ product.name }} 자세히 보기">자세히 보기 ↗</a></div>
+    </article>
+    {% else %}
+    <div class="empty"><h3>{{ '입력한 가격을 확인해 주세요' if error else '표시할 상품이 없습니다' }}</h3><p>검색 조건을 바꾸거나 상품이 등록된 뒤 다시 확인해 주세요.</p><a href="{{ url_for('catalog') }}">전체 상품 보기</a></div>
+    {% endfor %}
+  </div>
+  {% if not error %}<nav class="pagination" aria-label="상품 페이지">{% if previous_url %}<a rel="prev" href="{{ previous_url }}">← 이전</a>{% endif %}<span aria-current="page">{{ page }} 페이지{% if page <= pages %} / {{ pages }}{% endif %}</span>{% if next_url %}<a rel="next" href="{{ next_url }}">다음 →</a>{% endif %}</nav>{% endif %}
+</section>
+<section class="learning-note"><h2>주문은 어떻게 하나요?</h2><p>Swagger에서 회원가입과 로그인을 진행한 뒤 토큰으로 인증해 주문·취소·게시판 기능을 실습할 수 있습니다. 상품 수량은 주문에 따라 달라질 수 있습니다.</p><a href="/docs">API 문서 열기 ↗</a></section>
+{% endblock %}
