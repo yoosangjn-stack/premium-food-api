@@ -5,7 +5,7 @@
 ## 저장소 상태 · 2026-11-11
 
 - `work/premium-food-board`의 검증된 구현을 `main`에 fast-forward로 반영했습니다.
-- 저장소는 **비공개**입니다. 공개 전환·별도 게시판 제출 저장소·EC2 배포는 이번 병합에 포함하지 않습니다.
+- 저장소는 **공개**입니다(2026-11-11 확인). 별도 게시판 제출·EC2 배포 완료 여부는 별도로 확인합니다.
 - [최신 main](https://github.com/yoosangjn-stack/premium-food-api/tree/main) · [작업 브랜치](https://github.com/yoosangjn-stack/premium-food-api/tree/work/premium-food-board)
 - `.env`, 실제 DB, 가상환경, 로그, 백업은 Git에서 제외했습니다. 검사한 소스·테스트·문서만 반영합니다.
 
@@ -188,7 +188,7 @@ erDiagram
 
 ## 안전하게 실행하기
 
-Python 3.13+, uv, PostgreSQL이 필요합니다. 비공개 저장소 접근 권한이 있는 GitHub 계정으로 clone한 뒤, 아래 명령을 프로젝트 루트에서 실행합니다. 저장소: https://github.com/yoosangjn-stack/premium-food-api
+Python 3.13+, uv, PostgreSQL이 필요합니다. 저장소를 clone한 뒤, 아래 명령을 프로젝트 루트에서 실행합니다. 저장소: https://github.com/yoosangjn-stack/premium-food-api
 
 **새 실습 전용 DB만 사용하세요.** 기존 `.env`·실사용 DB를 덮어쓰지 마세요. create_all은 기존 테이블 구조를 바꾸는 마이그레이션 도구가 아닙니다.
 
@@ -374,12 +374,56 @@ GET /v1/products/2 응답의 stock_quantity는 6입니다.
 
 > 한계: 이 12장은 게시판 CRUD의 개별 실행 화면이나 전체 테스트 결과를 대체하지 않습니다. Swagger의 `Undocumented` 표시는 해당 오류 응답이 OpenAPI에 명시되지 않았다는 뜻이며, 오류 응답 자체는 위 캡처에서 확인됩니다.
 
+## 보조 검증: 로컬 API 테스트 화면 — 2026-11-11
+
+**아래 2장은 별도 로컬 테스트 UI에서 실제 API를 호출한 보조 증빙입니다. 테스트 UI 소스는 이 저장소에 포함하지 않았습니다.** 이 저장소를 clone해도 `/test-ui`는 열리지 않습니다. 제출 코드의 웹 화면은 위의 Jinja2 상품 목록·상세이며, API 재현은 `/docs`를 사용합니다.
+
+검증 기준 백엔드는 `4ee1f5d`입니다. 별도 UI 작업에서 백엔드 API·도메인·DB 처리 로직은 변경하지 않았습니다. 격리된 PostgreSQL 실습 DB와 가상 회원·주문만 사용했습니다. 캡처의 `example.com` 이메일, `010-0000-0000`, UUID는 테스트 데이터이며 실제 고객 정보가 아닙니다. 비밀번호 입력은 비워 두었으며 토큰·DB 접속정보는 표시하지 않습니다.
+
+### 01. 주문 → 재고 차감
+
+2개 주문 후 `PLACED`, 합계 12,000원, 상품 재고 4개를 확인합니다. 주문 전 재고는 6개였습니다. 오른쪽은 실제 주문 조회 API의 HTTP 200 응답입니다.
+
+<details>
+<summary>로컬 테스트 UI: 주문 결과와 재고 4개</summary>
+
+![로컬 테스트 UI 주문 결과와 재고 4개](docs/screenshots/2026-11-11-test-ui/01-order-stock.png)
+
+</details>
+
+### 02. 취소 → 재고 복원 → 게시판 작성·조회
+
+같은 주문이 `CANCELLED`로 바뀌고 재고가 6개로 복원됩니다. 게시글 작성 후 목록에 표시되며, 오른쪽에서 `GET /v1/boards/free/posts`의 HTTP 200 응답을 확인합니다. 이 화면은 게시판 전체 CRUD 완료 증빙이 아니라 **작성 후 조회 결과**입니다.
+
+<details>
+<summary>로컬 테스트 UI: 취소·재고 복원·게시판 조회</summary>
+
+![로컬 테스트 UI 취소와 재고 복원 및 게시판 조회](docs/screenshots/2026-11-11-test-ui/02-cancel-and-board.png)
+
+</details>
+
+### 제출 기준과 증빙 구분
+
+| 발제 요구 | 제출 저장소의 증빙 | 보조 화면의 역할 |
+|---|---|---|
+| Jinja2 웹 화면·실행 코드 | 기존 캡처 01·02·06·08, `src/templates/`, `src/web/` | 추가 UI를 필수 제출 코드로 주장하지 않음 |
+| Swagger 문서·정상 응답 | 기존 캡처 03·04·05·07 | 주문 → 취소 → 재고 복원 흐름 보강 |
+| 도메인 오류 400·미존재 404 | 기존 캡처 11·12 | 새 2장에는 오류 응답이 보이지 않으므로 대체하지 않음 |
+| JWT 블랙리스트 차단 401 | 기존 캡처 10 | 새 2장은 인증 보안 증빙을 대체하지 않음 |
+| 4계층·구조도·실행 방법 | 위의 디렉터리 트리·요청 흐름·실행 명령 | 이미지가 코드 검토를 대체하지 않음 |
+
+로컬 브라우저 검증에서 회원가입 201, 로그인 200, 재고 초과 409, 주문 201, 취소 200, 중복 취소 409, 게시글 작성 201·조회 200, 무효화된 토큰 401을 확인했습니다. **실행 확인 결과와 캡처에 보이는 범위는 구분합니다.** 재고 충돌은 이 구현에서 409이며, 발제의 400 예시는 기존 비밀번호 오류 캡처로 별도 제시합니다.
+
+재현 순서: 위 실행 안내로 새 실습 DB를 준비 → `/docs`에서 회원가입·인증 → 상품 조회 → 2개 주문 → 상품 재조회 → 주문 취소 → 상품 재조회 → 게시글 작성·목록 조회. 인증값을 입력한 Swagger 요청 영역은 공개 캡처에서 제외합니다.
+
+> 제출 한계: 테스트 UI 자체의 소스·실행 재현은 이번 공개 범위에 포함하지 않습니다. 기존 Swagger/Jinja2 캡처와 제출 코드를 기본 증빙으로 사용합니다. Notion 공개 링크·발표 자료·라이브 시연 및 별도 게시판 과제 제출 완료 여부는 이 변경으로 확정하지 않습니다.
+
 ## 학습·제출
 
 - [학습 가이드](docs/LEARNING_GUIDE.md), [Chapter 3 연결 실습](docs/CHAPTER3_STORY.md)
 - [제출 체크리스트](docs/SUBMISSION_CHECKLIST.md)
 
-Swagger·Jinja2·성공/오류·로그아웃 차단 캡처를 README에 포함했습니다. 코드는 [GitHub main](https://github.com/yoosangjn-stack/premium-food-api/tree/main)에서 확인합니다. 저장소는 비공개로 유지합니다. 공개 Notion URL·저장소 공개 전환·EC2 배포·최종 제출 여부는 별도로 확인해야 합니다. 본 프로젝트는 1인 개인 프로젝트이며, 실제 수행한 내용과 확인된 결과만 기록합니다.
+Swagger·Jinja2·성공/오류·로그아웃 차단 캡처를 README에 포함했습니다. 코드는 [GitHub main](https://github.com/yoosangjn-stack/premium-food-api/tree/main)에서 확인합니다. 저장소는 공개입니다. 공개 Notion URL·EC2 배포·최종 제출 여부는 별도로 확인해야 합니다. 본 프로젝트는 1인 개인 프로젝트이며, 실제 수행한 내용과 확인된 결과만 기록합니다.
 
 ## 알려진 한계
 
