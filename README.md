@@ -2,7 +2,7 @@
 
 재고 초과 주문, 중복 취소로 인한 재고 증가, 다른 회원의 주문 접근을 방지하는 학습용 API입니다. 회원·인증과 게시판을 함께 구현하며, AX Engineer 학습을 위해 코드와 실패 사례를 직접 설명할 수 있도록 구성했습니다.
 
-## 저장소 상태 · 2026-11-10
+## 저장소 상태 · 2026-11-11
 
 - `work/premium-food-board`의 검증된 구현을 `main`에 fast-forward로 반영했습니다.
 - 저장소는 **비공개**입니다. 공개 전환·별도 게시판 제출 저장소·EC2 배포는 이번 병합에 포함하지 않습니다.
@@ -188,7 +188,7 @@ erDiagram
 
 ## 안전하게 실행하기
 
-Python 3.13+, uv, PostgreSQL이 필요합니다. 저장소 clone은 공개 URL 확인 후 진행하고, 아래 명령은 프로젝트 루트에서 실행합니다. 아직 검증된 GitHub URL은 없습니다.
+Python 3.13+, uv, PostgreSQL이 필요합니다. 비공개 저장소 접근 권한이 있는 GitHub 계정으로 clone한 뒤, 아래 명령을 프로젝트 루트에서 실행합니다. 저장소: https://github.com/yoosangjn-stack/premium-food-api
 
 **새 실습 전용 DB만 사용하세요.** 기존 `.env`·실사용 DB를 덮어쓰지 마세요. create_all은 기존 테이블 구조를 바꾸는 마이그레이션 도구가 아닙니다.
 
@@ -236,7 +236,7 @@ uv run python scripts/check_db.py
 
 주요 API는 `/v1/users`, `/v1/auth/token`, `/v1/auth/login`, `/v1/auth/logout`, `/v1/products`, `/v1/orders`, `/v1/orders/{order_id}/cancel`, `/v1/boards`, `/v1/boards/{board_id}/posts`, `/v1/posts/{post_id}/comments`입니다.
 
-200은 조회·취소 성공, 201은 생성, 204는 삭제·로그아웃입니다. 400의 확인 사례는 잘못된 현재 비밀번호이며, 401/403은 인증/권한, 404는 미존재, 409는 상태 충돌, 422는 공백 제목 등을 포함한 입력 검증 실패입니다. 발제문은 도메인 차단 400을 예시로 들며 현재 구현은 재고 부족·중복 취소에 409를 사용합니다. 제출 시 이 차이를 설명하고 400·404·401 사례도 별도로 캡처해야 합니다.
+200은 조회·취소 성공, 201은 생성, 204는 삭제·로그아웃입니다. 400의 확인 사례는 잘못된 현재 비밀번호이며, 401/403은 인증/권한, 404는 미존재, 409는 상태 충돌, 422는 공백 제목 등을 포함한 입력 검증 실패입니다. 발제문은 도메인 차단 400을 예시로 들며 현재 구현은 재고 부족·중복 취소에 409를 사용합니다. 제출 시 이 차이를 설명하고 400·404·401 응답은 아래 제출용 화면에서 확인할 수 있습니다.
 
 ## 테스트와 현재 증거
 
@@ -244,7 +244,7 @@ uv run python scripts/check_db.py
 
 실제 HTTP에서 /docs·/·CSS 200, 상품 20개, 가입 201 → OAuth2 로그인 200 → 주문 201/재고 2 차감 → 취소 200/재고 원복 → 중복 취소 409를 확인했습니다. 미존재 상품 404, 잘못된 현재 비밀번호 400, 게시글 생성·조회·수정·삭제·삭제 후 조회 201/200/200/204/404, 로그아웃 204 → 같은 토큰 401도 확인했습니다. 공백 제목은 422입니다.
 
-브라우저 도구의 timeoutMs 오류로 시각 검증과 제출용 캡처는 미완료입니다. HTTP 성공을 화면 검수 완료로 대신하지 않습니다. 비공개 GitHub main에 구현 코드를 반영했습니다. 저장소 공개 전환·PPT/PDF·공개 Notion·EC2 배포는 미완료입니다. 상세 증거는 [11/10 검증 기록](docs/VERIFICATION_2026-11-10.md)을 보세요.
+2026-11-11 Swagger·Jinja2 실제 실행 화면 12장을 확보했습니다. 아래 캡처는 격리된 시연 데이터로 확인한 결과이며, 전체 테스트 재실행 결과와 구분합니다. 전체 테스트 기준은 [11/10 검증 기록](docs/VERIFICATION_2026-11-10.md)입니다. 저장소 공개 전환·공개 Notion·EC2 배포·최종 과제 제출은 이 캡처로 완료 처리하지 않습니다.
 
 테스트는 **로컬 premium_food_test 전용 DB**만 허용합니다. 테이블 생성과 테스트 데이터 쓰기가 있으므로 실사용 DB를 연결하면 안 됩니다.
 
@@ -258,12 +258,128 @@ uv run python -m compileall -q src tests scripts
 
 [11/9 검증 기록](docs/VERIFICATION.md), [Claude 검수 기록](docs/CLAUDE_REVIEW.md), [11/9 작업 기록](docs/WORKLOG_2026-11-09.md)은 당시 구조의 역사 자료입니다. 현재 경로 안내는 이 README를 기준으로 봅니다. 경로 변경 전 소스 148개는 프로젝트 밖 `_backups/premium-food-api-before-standard-layout-20261110-100207`에 보관했습니다.
 
+## 제출용 실행 화면 · 2026-11-11
+
+기준 구현: `6661abd`. 별도 시연 환경의 가상 데이터로 실행한 실제 Swagger·Jinja2 캡처입니다. 인증 관련 화면은 토큰과 비밀번호가 보이지 않는 응답 영역만 포함했습니다. 신규 프론트엔드를 추가한 것이 아니며 DBeaver 화면은 포함하지 않습니다.
+
+확인 순서: **조회 → 주문 → 재고 차감 → 취소 → 재고 복원 → 오류 차단**. 캡처를 펼치면 원본 화면을 확인할 수 있습니다.
+
+<details>
+<summary>01. 상품 목록</summary>
+
+기존 Jinja2 읽기 전용 화면에서 상품 목록과 재고를 조회합니다.
+
+![상품 목록](docs/screenshots/2026-11-11/01-jinja-products.png)
+
+</details>
+
+<details>
+<summary>02. 주문 전 재고 6개</summary>
+
+상품 2번 제주 감귤의 초기 재고는 6개입니다.
+
+![주문 전 재고 6개](docs/screenshots/2026-11-11/02-jinja-detail-before.png)
+
+</details>
+
+<details>
+<summary>03. Swagger API 목록</summary>
+
+회원·인증·게시판·상품·주문 엔드포인트를 확인합니다. 목록 화면은 개별 API의 실행 증거와 구분합니다.
+
+![Swagger API 목록](docs/screenshots/2026-11-11/03-swagger-overview.png)
+
+</details>
+
+<details>
+<summary>04. 상품 조회 200</summary>
+
+GET /v1/products/2 응답의 stock_quantity는 6입니다.
+
+![상품 조회 200](docs/screenshots/2026-11-11/04-swagger-product-200.png)
+
+</details>
+
+<details>
+<summary>05. 주문 생성 201</summary>
+
+2개 주문 후 상태 PLACED, 합계 12,000원을 확인합니다.
+
+![주문 생성 201](docs/screenshots/2026-11-11/05-swagger-order-201-response.png)
+
+</details>
+
+<details>
+<summary>06. 주문 후 재고 4개</summary>
+
+주문 처리 결과가 상품 조회 화면에 반영됩니다.
+
+![주문 후 재고 4개](docs/screenshots/2026-11-11/06-jinja-after-order-stock.png)
+
+</details>
+
+<details>
+<summary>07. 주문 취소 200</summary>
+
+같은 주문의 상태가 CANCELLED로 변경됩니다.
+
+![주문 취소 200](docs/screenshots/2026-11-11/07-swagger-cancel-200-response.png)
+
+</details>
+
+<details>
+<summary>08. 취소 후 재고 6개</summary>
+
+주문 수량 2개가 복원됩니다. 재고 흐름: 6 → 4 → 6.
+
+![취소 후 재고 6개](docs/screenshots/2026-11-11/08-jinja-after-cancel-stock.png)
+
+</details>
+
+<details>
+<summary>09. 중복 취소 차단 409</summary>
+
+이미 취소된 주문의 반복 취소를 거부합니다.
+
+![중복 취소 차단 409](docs/screenshots/2026-11-11/09-swagger-duplicate-cancel-409.png)
+
+</details>
+
+<details>
+<summary>10. 로그아웃 토큰 차단 401</summary>
+
+로그아웃된 토큰의 재사용을 거부합니다.
+
+![로그아웃 토큰 차단 401](docs/screenshots/2026-11-11/10-swagger-revoked-token-401.png)
+
+</details>
+
+<details>
+<summary>11. 잘못된 기존 비밀번호 400</summary>
+
+비밀번호 변경 시 기존 비밀번호 불일치를 거부합니다.
+
+![잘못된 기존 비밀번호 400](docs/screenshots/2026-11-11/11-swagger-domain-error-400.png)
+
+</details>
+
+<details>
+<summary>12. 없는 상품 조회 404</summary>
+
+존재하지 않는 상품을 조회하면 NOT_FOUND를 반환합니다.
+
+![없는 상품 조회 404](docs/screenshots/2026-11-11/12-swagger-not-found-404.png)
+
+</details>
+
+> 한계: 이 12장은 게시판 CRUD의 개별 실행 화면이나 전체 테스트 결과를 대체하지 않습니다. Swagger의 `Undocumented` 표시는 해당 오류 응답이 OpenAPI에 명시되지 않았다는 뜻이며, 오류 응답 자체는 위 캡처에서 확인됩니다.
+
 ## 학습·제출
 
 - [학습 가이드](docs/LEARNING_GUIDE.md), [Chapter 3 연결 실습](docs/CHAPTER3_STORY.md)
 - [제출 체크리스트](docs/SUBMISSION_CHECKLIST.md)
 
-PPT/PDF, 공개 팀 Notion URL, Swagger·Jinja2·성공/오류·로그아웃 차단 캡처는 아직 미완료입니다. 코드는 [비공개 GitHub main](https://github.com/yoosangjn-stack/premium-food-api/tree/main)에 반영했습니다. 저장소 공개 전환과 EC2 배포는 하지 않았으며, 접근 권한이 없는 사람은 현재 링크를 열 수 없습니다. 실제 팀원 이름·역할·활동은 확인된 사실만 기록하며 가상의 팀 기록을 만들지 않습니다.
+Swagger·Jinja2·성공/오류·로그아웃 차단 캡처를 README에 포함했습니다. 코드는 [GitHub main](https://github.com/yoosangjn-stack/premium-food-api/tree/main)에서 확인합니다. 저장소는 비공개로 유지합니다. 공개 Notion URL·저장소 공개 전환·EC2 배포·최종 제출 여부는 별도로 확인해야 합니다. 본 프로젝트는 1인 개인 프로젝트이며, 실제 수행한 내용과 확인된 결과만 기록합니다.
 
 ## 알려진 한계
 
