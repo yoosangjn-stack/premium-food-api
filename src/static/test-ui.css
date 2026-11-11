@@ -1,0 +1,29 @@
+:root{--ink:#39312d;--muted:#766b62;--paper:#faf7f2;--line:#e4d9ce;--green:#805842;--wash:#f2e8dc}
+/* API 테스트 화면 전용. 공용 styles.css 위에 따뜻한 중립색 패널만 더합니다. */
+.tu-intro{padding:40px 0 24px}
+.tu-intro h1{font-size:32px;margin-bottom:12px}
+.tu-status{margin:16px 0 0;font-size:14px}
+.tu-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start;margin-bottom:56px}
+.tu-panels{display:grid;gap:20px}
+.tu-panel{background:#fffdf9;border:1px solid #e6dfd3;border-radius:5px;padding:22px}
+.tu-panel h2{font-size:18px;margin-bottom:12px}
+.tu-panel h3{font-size:14px;margin:16px 0 8px}
+.tu-panel form{display:grid;gap:10px;margin-top:8px}
+.tu-panel label{display:grid;gap:4px;font-size:12px;font-weight:700;margin:10px 0}
+.tu-panel form label{margin:0}
+.tu-panel button{height:40px;padding:8px 16px;margin:4px 8px 4px 0}
+.tu-panel button:disabled{opacity:.5;cursor:wait}
+.tu-panel .tu-secondary{background:#f3eee6;color:var(--ink);border-color:#d9cfc0}
+textarea{width:100%;padding:8px 11px;border:1px solid #c9d0c1;border-radius:3px;font:inherit;font-size:14px;resize:vertical}
+.tu-hint{font-size:12px;color:var(--muted);margin:8px 0 0}
+.tu-list{margin:10px 0;padding-left:18px;font-size:13px;overflow-wrap:anywhere}
+.tu-log{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.tu-entry{border-top:1px solid #e6dfd3;padding-top:10px;margin-top:10px}
+.tu-entry p{margin:0;font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.tu-ok{color:var(--green)}
+.tu-fail{color:#8a4a24}
+.tu-entry pre{margin:6px 0 0;padding:10px;background:#f6f1ea;border-radius:3px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:900px){.tu-layout{grid-template-columns:1fr}.tu-log{position:static;max-height:none}}
+
+.tu-panel form{grid-template-columns:repeat(2,minmax(0,1fr))}.tu-panel form h3,.tu-panel form button,.tu-panel form label:has(textarea){grid-column:1/-1}
+@media(max-width:600px){.tu-panel form{grid-template-columns:1fr}.site-header{flex-wrap:wrap;padding-block:16px}}

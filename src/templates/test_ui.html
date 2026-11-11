@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}API 테스트{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', path='/test-ui.css') }}">
+<script src="{{ url_for('static', path='/test-ui.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<section class="tu-intro">
+  <p class="eyebrow">SMALL BATCH, GOOD FOOD</p>
+  <h1>API 테스트 화면</h1>
+  <p class="lead">API 동작을 눈으로 확인하는 테스트 전용 화면입니다. 실제 결제·배송은 없습니다. 토큰은 이 탭의 메모리에만 있으며 새로고침하거나 로그아웃하면 사라집니다.</p>
+  <p class="tu-status">로그인 상태: <strong id="auth-status">로그아웃</strong></p>
+</section>
+
+<div class="tu-layout">
+  <div class="tu-panels">
+    <section class="tu-panel" aria-labelledby="member-heading">
+      <h2 id="member-heading">1. 회원</h2>
+      <form id="signup-form" method="post" autocomplete="off">
+        <h3>회원가입</h3>
+        <label>아이디<input name="username" required maxlength="30" placeholder="영문 소문자·숫자·밑줄"></label>
+        <label>전화번호<input name="phone" required maxlength="29" placeholder="010-1234-5678"></label>
+        <label>이메일<input name="email" type="email" required></label>
+        <label>이름<input name="name" required maxlength="20"></label>
+        <label>비밀번호<input name="password" type="password" required placeholder="8자 이상, 영문·숫자·특수문자"></label>
+        <button type="submit">가입</button>
+      </form>
+      <form id="login-form" method="post" autocomplete="off">
+        <h3>로그인</h3>
+        <label>이메일<input name="email" type="email" required></label>
+        <label>비밀번호<input name="password" type="password" required></label>
+        <button type="submit">로그인</button>
+        <button type="button" id="logout-button" class="tu-secondary">로그아웃</button>
+      </form>
+    </section>
+
+    <section class="tu-panel" aria-labelledby="order-heading">
+      <h2 id="order-heading">2. 상품·주문</h2>
+      <button type="button" id="load-products">상품 목록 불러오기</button>
+      <form id="order-form" method="post">
+        <label>상품<select name="product_id" id="product-select"><option value="">먼저 상품 목록을 불러오세요</option></select></label>
+        <label>수량<input name="quantity" type="number" min="1" max="1000" value="1" required></label>
+        <button type="submit">주문 생성</button>
+      </form>
+    </section>
+
+    <section class="tu-panel" aria-labelledby="my-orders-heading">
+      <h2 id="my-orders-heading">3. 내 주문</h2>
+      <button type="button" id="load-orders">내 주문 불러오기</button>
+      <label>주문<select id="order-select"><option value="">먼저 내 주문을 불러오세요</option></select></label>
+      <button type="button" id="cancel-order">선택 주문 취소</button>
+      <p class="tu-hint">취소 후 상품 목록과 내 주문을 자동으로 다시 불러와 재고 복원을 확인합니다.</p>
+    </section>
+
+    <section class="tu-panel" aria-labelledby="board-heading">
+      <h2 id="board-heading">4. 게시판</h2>
+      <button type="button" id="load-boards">게시판 불러오기</button>
+      <label>게시판<select id="board-select"><option value="">먼저 게시판을 불러오세요</option></select></label>
+      <button type="button" id="load-posts">글 목록 불러오기</button>
+      <ul id="post-list" class="tu-list"></ul>
+      <form id="post-form" method="post">
+        <h3>글 작성 (로그인 회원)</h3>
+        <label>제목<input name="title" maxlength="200"></label>
+        <label>내용<textarea name="content" rows="3"></textarea></label>
+        <button type="submit">글 작성</button>
+      </form>
+    </section>
+  </div>
+
+  <section class="tu-panel tu-log" aria-labelledby="log-heading">
+    <h2 id="log-heading">응답 기록</h2>
+    <p class="tu-hint">최신 응답이 위에 표시됩니다. 토큰·비밀번호 값은 [숨김]으로 가립니다.</p>
+    <div id="response-log" aria-live="polite"></div>
+  </section>
+</div>
+{% endblock %}

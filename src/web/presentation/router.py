@@ -62,3 +62,18 @@ async def product_detail(request: Request, product_id: int = PathParameter(gt=0,
     except NotFoundException:
         return templates.TemplateResponse(request=request, name="not_found.html", status_code=404)
     return templates.TemplateResponse(request=request, name="product.html", context={"product": product})
+
+
+# Test-only page: scripts/styles must come from /static, never inline, and forms never submit natively.
+TEST_UI_HEADERS = {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; "
+                               "img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; "
+                               "frame-ancestors 'none'",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+}
+
+
+@router.get("/test-ui", response_class=HTMLResponse)
+async def test_ui(request: Request):
+    return templates.TemplateResponse(request=request, name="test_ui.html", headers=TEST_UI_HEADERS)
